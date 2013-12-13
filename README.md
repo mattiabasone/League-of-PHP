@@ -9,9 +9,12 @@ http://developer.riotgames.com/api/methods
 
 ### Note
 For simplifying reasons, this implementation accepts requests in a slightly different format. For example.
+
     /api/lol/{region}/v1.1/champion
     /api/lol/{region}/v1.1/summoner/by-name/{name}
+
 Becomes
+
     champion
     summoner/by-name/{name}
     team/by-summoner/{summonerId}
