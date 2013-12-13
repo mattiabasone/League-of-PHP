@@ -12,6 +12,7 @@ For simplifying reasons, this implementation accepts requests in a slightly diff
 
     /api/lol/{region}/v1.1/champion
     /api/lol/{region}/v1.1/summoner/by-name/{name}
+    /api/{region}/v2.1/team/by-summoner/{summonerId}
 
 Becomes
 
