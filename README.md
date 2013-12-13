@@ -1,6 +1,6 @@
-League-of-PHP
+League of PHP
 =============
 
-PHP Implementation of the official League Of Legends API
+PHP Implementation of the official League of Legends API
 
 Invite `Roobre` if you see me online! :D
