@@ -39,6 +39,11 @@ class LeagueOfPHP {
 		return $this->response;
 	}
 
+	/** Sets the region of the instance
+	 *
+	 * @param $region string The new region to perform the requests at.
+	 *
+	 */
 	public function setRegion($region) {
 		$this->region = $region;
 	}
