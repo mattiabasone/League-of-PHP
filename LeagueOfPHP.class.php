@@ -21,7 +21,7 @@ class LeagueOfPHP {
 
 	/** Performs a request
 	 *
-	 * @param $key        string Request URL. Region must be ommited, and if the request starts with lol/ it must be included.
+	 * @param $key        string Request URL. Region must be ommited.
 	 * @param $version    string The version of the method to use. At the time of writing, only 1.1 and 2.1 are supported.
 	 * @param $type       string The request type. Currently Riot only offers GET requests.
 	 *
@@ -30,6 +30,11 @@ class LeagueOfPHP {
 		$this->response = json_decode($this->doRequest($this->buildURL($req, $version), $type));
 	}
 
+	/** Performs a request against /api/lol/static-data/
+	 *
+	 * @param $req     string Request URL. Region must be ommited.
+	 * @param $version string The version of the method to use. If it's equal to 1, it can be ommited.
+	 */
 	public function requestStaticData($req, $version = '1') {
 		$this->response = json_decode($this->doRequest($this->buildURL($req, $version, true), 'GET'));
 	}
