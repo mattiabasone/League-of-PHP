@@ -8,21 +8,24 @@ $api = new LeagueOfPHP('KEY', 'euw');
 
 
 // Example request
-$api->request('summoner/by-name/Roobre', '1.1');
-
-// If version is 1.1 can be omitted.
-$api->request('summoner/by-name/Roobre');
+$api->request('summoner/by-name/roobre', '1.3');
 
 // Print the response
 print_r($api->response());
 
 
 // Store my id
-$id = $api->response()->id;
+$id = $api->response()->roobre->id;
+
+// Request Teams
+$api->request("team/by-summoner/$id", '2.2');
+
+// Print the response
+//print_r($api->response());
 
 
-// Another example request
-$api->request("league/by-summoner/$id", '2.1');
+// Static example request
+$api->requestStaticData('summoner-spell');
 
 // Print the response
 print_r($api->response());

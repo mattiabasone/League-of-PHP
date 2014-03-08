@@ -1,7 +1,7 @@
 <?php
 
 class LeagueOfPHP {
-	private static $baseURL = 'http://prod.api.pvp.net/api';
+	private static $baseURL = 'http://prod.api.pvp.net/api/lol';
 
 	private $region;
 	private $key;
@@ -26,8 +26,12 @@ class LeagueOfPHP {
 	 * @param $type       string The request type. Currently Riot only offers GET requests.
 	 *
 	 */
-	public function request($req, $version = '1.1', $type = 'GET') {
+	public function request($req, $version, $type = 'GET') {
 		$this->response = json_decode($this->doRequest($this->buildURL($req, $version), $type));
+	}
+
+	public function requestStaticData($req, $version = '1') {
+		$this->response = json_decode($this->doRequest($this->buildURL($req, $version, true), 'GET'));
 	}
 
 	/** Returns the request result.
@@ -48,21 +52,13 @@ class LeagueOfPHP {
 		$this->region = $region;
 	}
 
-	private function buildURL($req, $version) {
-		switch ($version) {
-			case '1.1':
-			$req = 'lol/' . $this->region . '/v1.1/' . $req;
-			break;
+	private function buildURL($req, $version, $static = false) {
+		$url = self::$baseURL;
 
-			case '2.1':
-			$req = $this->region . '/v2.1/' . $req;
-			break;
+		if ($static)
+			$url .= '/static-data';
 
-			default:
-			throw new Exception('Unsupported version.');
-		}
-
-		return self::$baseURL . "/$req?api_key={$this->key}";
+		return $url . "/{$this->region}/v$version/$req?api_key={$this->key}";
 	}
 
 	private function doRequest($url, $type) {
