@@ -12,13 +12,16 @@ For simplifying reasons, this implementation accepts requests in a slightly diff
 
     /api/lol/{region}/v1.1/champion
     /api/lol/{region}/v1.1/summoner/by-name/{name}
-    /api/{region}/v2.1/team/by-summoner/{summonerId}
+
+    /api/lol/static-data/{region}/v1/summoner-spell
 
 Becomes
 
-    champion
-    summoner/by-name/{name}
-    team/by-summoner/{summonerId}
+    request('champion', 1.1);
+    request('summoner/by-name/{name}', 1.3);
+
+    requestStaticData('summoner-spell');
+
 
 ## Constants
 Some methods return human-unreadable constats. You can check them here:
