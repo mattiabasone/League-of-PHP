@@ -1,12 +1,20 @@
 <?php
 
 class LeagueOfPHP {
-	private static $baseURL = 'http://prod.api.pvp.net/api/lol';
+	private static $baseHostname = 'api.pvp.net/api/lol';
+
+	private static $curlOpts = array(
+		CURLOPT_HEADER => true,
+		CURLOPT_RETURNTRANSFER => true
+		);
 
 	private $region;
 	private $key;
 
+	private $ch;
+
 	private $response;
+	private $responseHeaders;
 
 	/** Instances the API
 	 *
@@ -17,17 +25,28 @@ class LeagueOfPHP {
 	public function __construct($key, $region) {
 		$this->key = $key;
 		$this->region = $region;
+
+		$this->ch = curl_init();
+
+		curl_setopt_array($this->ch, self::$curlOpts);
+	}
+
+	/** Frees the allocated resources.
+	 *
+	 */
+	public function __destruct() {
+		curl_close($this->ch);
 	}
 
 	/** Performs a request
 	 *
-	 * @param $key        string Request URL. Region must be ommited.
-	 * @param $version    string The version of the method to use. At the time of writing, only 1.1 and 2.1 are supported.
-	 * @param $type       string The request type. Currently Riot only offers GET requests.
+	 * @param $key     string Request URL. Region must be ommited.
+	 * @param $version string The version of the method to use. At the time of writing, only 1.1 and 2.1 are supported.
+	 * @param $type    string The request type. Currently Riot only offers GET requests.
 	 *
 	 */
 	public function request($req, $version, $type = 'GET') {
-		$this->response = json_decode($this->doRequest($this->buildURL($req, $version), $type));
+		$this->doRequest($this->buildURL($req, $version), $type);
 	}
 
 	/** Performs a request against /api/lol/static-data/
@@ -36,7 +55,7 @@ class LeagueOfPHP {
 	 * @param $version string The version of the method to use. If it's equal to 1, it can be ommited.
 	 */
 	public function requestStaticData($req, $version = '1') {
-		$this->response = json_decode($this->doRequest($this->buildURL($req, $version, true), 'GET'));
+		$this->doRequest($this->buildURL($req, $version, true), 'GET');
 	}
 
 	/** Returns the request result.
@@ -46,6 +65,14 @@ class LeagueOfPHP {
 	 */
 	public function response() {
 		return $this->response;
+	}
+
+	/** Returns the response headers for the last request.
+	 *  @deprecated response()->headers should be used instead.
+	 *  @return HTTP reponse headers for the last request.
+	 */
+	public function responseHeaders() {
+		return $this->response->headers;
 	}
 
 	/** Sets the region of the instance
@@ -58,7 +85,7 @@ class LeagueOfPHP {
 	}
 
 	private function buildURL($req, $version, $static = false) {
-		$url = self::$baseURL;
+		$url = 'http://' . $this->region . '.' . self::$baseHostname;
 
 		if ($static)
 			$url .= '/static-data';
@@ -67,10 +94,20 @@ class LeagueOfPHP {
 	}
 
 	private function doRequest($url, $type) {
+		curl_setopt($this->ch, CURLOPT_URL, $url);
+		
 		if ($type == 'GET') {
-			return file_get_contents($url);
+			curl_setopt($this->ch, CURLOPT_HTTPGET, true);
 		}
-		// TODO: If riot implements POST methods, they will be handled here.
+
+		$response = curl_exec($this->ch);
+		$breakpoint = strpos($response, '{');
+
+		$this->response = new stdClass();
+
+		$this->response->code = curl_getinfo($this->ch, CURLINFO_HTTP_CODE);
+		$this->response->headers = substr($response, 0, $breakpoint - 1);
+		$this->response->body = json_decode(substr($response, $breakpoint));
 	}
 
 }
