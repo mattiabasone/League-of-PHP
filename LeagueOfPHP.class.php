@@ -21,9 +21,9 @@ class LeagueOfPHP {
 
 	/** Performs a request
 	 *
-	 * @param $key        string Request URL. Region must be ommited.
-	 * @param $version    string The version of the method to use. At the time of writing, only 1.1 and 2.1 are supported.
-	 * @param $type       string The request type. Currently Riot only offers GET requests.
+	 * @param $key     string Request URL. Region must be ommited.
+	 * @param $version string The version of the method to use. At the time of writing, only 1.1 and 2.1 are supported.
+	 * @param $type    string The request type. Currently Riot only offers GET requests.
 	 *
 	 */
 	public function request($req, $version, $type = 'GET') {
