@@ -22,6 +22,9 @@ class LeagueOfPHP {
     private $timeout;
     private $tries;
 
+    private $debug;
+    private $output;
+
     /** Instances the API
      *
      * @param $key    string Your RIOT API Key. Get one at http://developer.riotgames.com/
@@ -37,6 +40,7 @@ class LeagueOfPHP {
         curl_setopt_array($this->ch, self::$curlOpts);
 
         $this->autoRetry = array();
+        $this->debug = false;
     }
 
     /** Frees the allocated resources.
@@ -72,6 +76,7 @@ class LeagueOfPHP {
      *
      */
     public function response() {
+        $this->debugPrint(print_r($this->response, true));
         return $this->response;
     }
 
@@ -90,6 +95,8 @@ class LeagueOfPHP {
      */
     public function setRegion($region) {
         $this->region = $region;
+
+        $this->debugPrint("Region changed to '$region'.");
     }
 
     /** Forces the api to automatically retry failed requests
@@ -104,6 +111,18 @@ class LeagueOfPHP {
         $this->autoRetry = $autoRetry;
         $this->timeout = $timeout;
         $this->tries = $tries;
+
+        $this->debugPrint('Autoretry set for error codes (' . implode(', ', $autoRetry) . ") with timeout $timeout and max $tries tries.");
+    }
+
+    /** Enables verbose debug logs
+     *
+     * @param $debug boolean True to enable debug logs, false to disable.
+     * @param $out handle Stream to write the log to. Must be already open. Defaults to STDERR.
+     */
+    public function debug($debug = true, $out = STDERR) {
+        $this->debug = $debug;
+        $this->output = $out;
     }
 
     private function buildURL($req, $version, $static = false) {
@@ -126,6 +145,8 @@ class LeagueOfPHP {
 
         do {
             ++$tries;
+
+            $this->debugPrint("Requesting $url, try #$tries.");
             
             $response = curl_exec($this->ch);
             $breakpoint = strpos($response, '{');
@@ -137,6 +158,14 @@ class LeagueOfPHP {
             $this->response->sentHeaders = curl_getinfo($this->ch, CURLINFO_HEADER_OUT);
             $this->response->body = json_decode(substr($response, $breakpoint));
         } while (in_array($this->response->code, $this->autoRetry) && $tries < $this->tries && !sleep($this->timeout));
+
+        if ($tries == $this->tries)
+            $this->debugPrint("Max tries exhausted while requesting $url.");
+    }
+
+    private function debugPrint($msg) {
+        if ($this->debug)
+            fwrite($this->output, 'LOP Debug: ' . $msg . "\n");
     }
 
 }
