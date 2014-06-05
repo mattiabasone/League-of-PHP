@@ -30,8 +30,8 @@ class LeagueOfPHP {
     /**
      * Instances the API
      *
-     * @param $key    string Your RIOT API Key. Get one at http://developer.riotgames.com/
-     * @param $region string The region to query at.
+     * @param string $key    Your RIOT API Key. Get one at http://developer.riotgames.com/
+     * @param string $region The region to query at.
      *
      */
     public function __construct($key, $region) {
@@ -58,9 +58,9 @@ class LeagueOfPHP {
     /**
      * Performs a request
      *
-     * @param $key     string Request URL. Region must be ommited.
-     * @param $version string The version of the method to use. At the time of writing, only 1.1 and 2.1 are supported.
-     * @param $type    string The request type. Currently Riot only offers GET requests.
+     * @param string $req     Request URL. Region must be ommited.
+     * @param string $version The version of the method to use.
+     * @param string $type    The request type. Currently Riot only offers GET requests.
      *
      */
     public function request($req, $version, $type = 'GET') {
@@ -70,8 +70,8 @@ class LeagueOfPHP {
     /**
      * Performs a request against /api/lol/static-data/
      *
-     * @param $req     string Request URL. Region must be ommited.
-     * @param $version string The version of the method to use. If it's equal to 1, it can be ommited.
+     * @param string $req     Request URL. Region must be ommited.
+     * @param string $version The version of the method to use. If it's equal to 1, it can be ommited.
      */
     public function requestStaticData($req, $version = '1') {
         $this->doRequest($this->buildURL($req, $version, true), 'GET');
@@ -80,8 +80,7 @@ class LeagueOfPHP {
     /**
      * Returns the request result.
      *
-     * @return The last request's result, as StdClass Object.
-     *
+     * @return stdClass The last request's result, as stdClass Object.
      */
     public function response() {
         $this->debugPrint(print_r($this->response, true));
@@ -90,8 +89,9 @@ class LeagueOfPHP {
 
     /**
      * Returns the response headers for the last request.
-     *  @deprecated response()->headers should be used instead.
-     *  @return HTTP reponse headers for the last request.
+     * 
+     * @deprecated response()->headers should be used instead.
+     * @return string HTTP reponse headers for the last request.
      */
     public function responseHeaders() {
         return $this->response->headers;
@@ -100,8 +100,7 @@ class LeagueOfPHP {
     /**
      * Sets the region of the instance
      *
-     * @param $region string The new region to perform the requests at.
-     *
+     * @param string $region The new region to perform the requests at.
      */
     public function setRegion($region) {
         $this->region = $region;
@@ -112,10 +111,10 @@ class LeagueOfPHP {
     /**
      * Forces the api to automatically retry failed requests
      *
-     * @param $autoRetry array Array of response codes to retry if received.
-     *     Send an empty array to stop autoretryng. If null is sent, it will default to 429.
-     * @param $timeout int Time, in seconds, to wait between requests.
-     * @param $tries int Maximum number of tries to do before giving up.
+     * @param array $autoRetry Array of response codes to retry if received.
+     *     Send an empty array to stop autoretrying. If null is sent, it will default to 429.
+     * @param int   $timeout   Time, in seconds, to wait between requests.
+     * @param int   $tries     Maximum number of tries to do before giving up.
      */
     public function setAutoRetry($autoRetry = null, $timeout = 2, $tries = 5) {
         if ($autoRetry == null)
@@ -131,7 +130,7 @@ class LeagueOfPHP {
     /**
      * Sets a callback function to call when a requests fail.
      *
-     * @param $callback callable Function that will be called when a request fails. 
+     * @param callable $callback Function that will be called when a request fails. 
      *     The first parameter is the request URL, and the second the HTTP response code.
      */
     public function setCallback($callback = null) {
@@ -142,14 +141,23 @@ class LeagueOfPHP {
     /**
      * Enables verbose debug logs
      *
-     * @param $debug boolean True to enable debug logs, false to disable.
-     * @param $out handle Stream to write the log to. Must be already open. Defaults to STDERR.
+     * @param boolean $debug True to enable debug logs, false to disable.
+     * @param handle  $out Stream to write the log to. Must be already open. Defaults to STDERR.
      */
     public function debug($debug = true, $out = STDERR) {
         $this->debug = $debug;
         $this->output = $out;
     }
 
+    // --# NO TRESPASSING # --    Private section    --# NO TRESPASSING # --
+
+    /**
+     * Crafts the full request URL.
+     *
+     * @param string $req     Base name of the request.
+     * @param string $version Method version.
+     * @param string $static  True if the method is static.
+     */
     private function buildURL($req, $version, $static = false) {
         $url = 'http://' . $this->region . '.' . self::$baseHostname;
 
@@ -159,6 +167,12 @@ class LeagueOfPHP {
         return $url . "/{$this->region}/v$version/$req?api_key={$this->key}";
     }
 
+    /**
+     * Actually performs the request against the given url.
+     *
+     * @param string $url  URL to request.
+     * @param string $tipe HTTP request type (GET or POST)
+     */
     private function doRequest($url, $type) {
         curl_setopt($this->ch, CURLOPT_URL, $url);
         
@@ -190,11 +204,22 @@ class LeagueOfPHP {
         }
     }
 
+    /** 
+     * Prints a debug message, if configured to do so.
+     *
+     * @param string $msg Message to print.
+     */
     private function debugPrint($msg) {
         if ($this->debug)
             fwrite($this->output, 'LOP Debug: ' . $msg . "\n");
     }
 
+    /**
+     * Calls the user-defined function if configured to do so.
+     * 
+     * @param string $url  URL which was being requested.
+     * @param int    $code HTTP response code.
+     */
     private function callback($url, $code) {
         if($this->callback != null) {
             call_user_func($this->callback, $url, $code);
