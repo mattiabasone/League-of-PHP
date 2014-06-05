@@ -5,6 +5,7 @@ class LeagueOfPHP {
 
 	private static $curlOpts = array(
 		CURLOPT_HEADER => true,
+		CURLINFO_HEADER_OUT => true,
 		CURLOPT_RETURNTRANSFER => true
 		);
 
@@ -107,6 +108,7 @@ class LeagueOfPHP {
 
 		$this->response->code = curl_getinfo($this->ch, CURLINFO_HTTP_CODE);
 		$this->response->headers = substr($response, 0, $breakpoint - 1);
+		$this->response->sentHeaders = curl_getinfo($this->ch, CURLINFO_HEADER_OUT);
 		$this->response->body = json_decode(substr($response, $breakpoint));
 	}
 
