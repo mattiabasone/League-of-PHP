@@ -15,7 +15,7 @@ print_r($api->response());
 
 
 // Store my id
-$id = $api->response()->roobre->id;
+$id = $api->response()->body->roobre->id;
 
 // Request Teams
 $api->request("team/by-summoner/$id", '2.2');
