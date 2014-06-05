@@ -15,7 +15,6 @@ class LeagueOfPHP {
     private $ch;
 
     private $response;
-    private $responseHeaders;
 
     /** Instances the API
      *
