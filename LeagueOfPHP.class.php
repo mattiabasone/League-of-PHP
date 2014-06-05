@@ -25,6 +25,8 @@ class LeagueOfPHP {
     private $debug;
     private $output;
 
+    private $callback;
+
     /** Instances the API
      *
      * @param $key    string Your RIOT API Key. Get one at http://developer.riotgames.com/
@@ -41,6 +43,7 @@ class LeagueOfPHP {
 
         $this->autoRetry = array();
         $this->debug = false;
+        $this->callback = null;
     }
 
     /** Frees the allocated resources.
@@ -101,7 +104,8 @@ class LeagueOfPHP {
 
     /** Forces the api to automatically retry failed requests
      *
-     * @param $autoRetry array Array of response codes to retry if received. Send an empty array to stop autoretryng. If null is sent, it will default to 429.
+     * @param $autoRetry array Array of response codes to retry if received.
+     *     Send an empty array to stop autoretryng. If null is sent, it will default to 429.
      * @param $timeout int Time, in seconds, to wait between requests.
      * @param $tries int Maximum number of tries to do before giving up.
      */
@@ -112,7 +116,18 @@ class LeagueOfPHP {
         $this->timeout = $timeout;
         $this->tries = $tries;
 
-        $this->debugPrint('Autoretry set for error codes (' . implode(', ', $autoRetry) . ") with timeout $timeout and max $tries tries.");
+        $this->debugPrint('Autoretry set for error codes (' . implode(', ', $autoRetry) .
+            ") with timeout $timeout and max $tries tries.");
+    }
+
+    /** Sets a callback function to call when a requests fail.
+     *
+     * @param $callback callable Function that will be called when a request fails. 
+     *     The first parameter is the request URL, and the second the HTTP response code.
+     */
+    public function setCallback($callback = null) {
+        $this->callback = $callback;
+        $this->debugPrint("Callback on error function set to $callback");
     }
 
     /** Enables verbose debug logs
@@ -144,8 +159,6 @@ class LeagueOfPHP {
         $tries = 0;
 
         do {
-            ++$tries;
-
             $this->debugPrint("Requesting $url, try #$tries.");
             
             $response = curl_exec($this->ch);
@@ -157,15 +170,25 @@ class LeagueOfPHP {
             $this->response->headers = substr($response, 0, $breakpoint - 1);
             $this->response->sentHeaders = curl_getinfo($this->ch, CURLINFO_HEADER_OUT);
             $this->response->body = json_decode(substr($response, $breakpoint));
-        } while (in_array($this->response->code, $this->autoRetry) && $tries < $this->tries && !sleep($this->timeout));
 
-        if ($tries == $this->tries)
+        } while (in_array($this->response->code, $this->autoRetry) && $tries++ < $this->tries
+            && !sleep($this->timeout));
+
+        if ($this->response->code != 200) {
             $this->debugPrint("Max tries exhausted while requesting $url.");
+            $this->callback($url, $this->response->code);
+        }
     }
 
     private function debugPrint($msg) {
         if ($this->debug)
             fwrite($this->output, 'LOP Debug: ' . $msg . "\n");
+    }
+
+    private function callback($url, $code) {
+        if($this->callback != null) {
+            call_user_func($this->callback, $url, $code);
+        }
     }
 
 }
