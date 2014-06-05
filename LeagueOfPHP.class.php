@@ -9,12 +9,18 @@ class LeagueOfPHP {
         CURLOPT_RETURNTRANSFER => true
         );
 
+    private static $default_autoretry = array(429);
+
     private $region;
     private $key;
 
     private $ch;
 
     private $response;
+
+    private $autoRetry;
+    private $timeout;
+    private $tries;
 
     /** Instances the API
      *
@@ -29,6 +35,8 @@ class LeagueOfPHP {
         $this->ch = curl_init();
 
         curl_setopt_array($this->ch, self::$curlOpts);
+
+        $this->autoRetry = array();
     }
 
     /** Frees the allocated resources.
@@ -84,6 +92,20 @@ class LeagueOfPHP {
         $this->region = $region;
     }
 
+    /** Forces the api to automatically retry failed requests
+     *
+     * @param $autoRetry array Array of response codes to retry if received. Send an empty array to stop autoretryng. If null is sent, it will default to 429.
+     * @param $timeout int Time, in seconds, to wait between requests.
+     * @param $tries int Maximum number of tries to do before giving up.
+     */
+    public function setAutoRetry($autoRetry = null, $timeout = 2, $tries = 5) {
+        if ($autoRetry == null)
+            $autoRetry = self::$default_autoretry;
+        $this->autoRetry = $autoRetry;
+        $this->timeout = $timeout;
+        $this->tries = $tries;
+    }
+
     private function buildURL($req, $version, $static = false) {
         $url = 'http://' . $this->region . '.' . self::$baseHostname;
 
@@ -100,15 +122,21 @@ class LeagueOfPHP {
             curl_setopt($this->ch, CURLOPT_HTTPGET, true);
         }
 
-        $response = curl_exec($this->ch);
-        $breakpoint = strpos($response, '{');
+        $tries = 0;
 
-        $this->response = new stdClass();
+        do {
+            ++$tries;
+            
+            $response = curl_exec($this->ch);
+            $breakpoint = strpos($response, '{');
 
-        $this->response->code = curl_getinfo($this->ch, CURLINFO_HTTP_CODE);
-        $this->response->headers = substr($response, 0, $breakpoint - 1);
-        $this->response->sentHeaders = curl_getinfo($this->ch, CURLINFO_HEADER_OUT);
-        $this->response->body = json_decode(substr($response, $breakpoint));
+            $this->response = new stdClass();
+
+            $this->response->code = curl_getinfo($this->ch, CURLINFO_HTTP_CODE);
+            $this->response->headers = substr($response, 0, $breakpoint - 1);
+            $this->response->sentHeaders = curl_getinfo($this->ch, CURLINFO_HEADER_OUT);
+            $this->response->body = json_decode(substr($response, $breakpoint));
+        } while (in_array($this->response->code, $this->autoRetry) && $tries < $this->tries && !sleep($this->timeout));
     }
 
 }
