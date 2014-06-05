@@ -27,7 +27,8 @@ class LeagueOfPHP {
 
     private $callback;
 
-    /** Instances the API
+    /**
+     * Instances the API
      *
      * @param $key    string Your RIOT API Key. Get one at http://developer.riotgames.com/
      * @param $region string The region to query at.
@@ -46,14 +47,16 @@ class LeagueOfPHP {
         $this->callback = null;
     }
 
-    /** Frees the allocated resources.
+    /**
+     * Frees the allocated resources.
      *
      */
     public function __destruct() {
         curl_close($this->ch);
     }
 
-    /** Performs a request
+    /**
+     * Performs a request
      *
      * @param $key     string Request URL. Region must be ommited.
      * @param $version string The version of the method to use. At the time of writing, only 1.1 and 2.1 are supported.
@@ -64,7 +67,8 @@ class LeagueOfPHP {
         $this->doRequest($this->buildURL($req, $version), $type);
     }
 
-    /** Performs a request against /api/lol/static-data/
+    /**
+     * Performs a request against /api/lol/static-data/
      *
      * @param $req     string Request URL. Region must be ommited.
      * @param $version string The version of the method to use. If it's equal to 1, it can be ommited.
@@ -73,7 +77,8 @@ class LeagueOfPHP {
         $this->doRequest($this->buildURL($req, $version, true), 'GET');
     }
 
-    /** Returns the request result.
+    /**
+     * Returns the request result.
      *
      * @return The last request's result, as StdClass Object.
      *
@@ -83,7 +88,8 @@ class LeagueOfPHP {
         return $this->response;
     }
 
-    /** Returns the response headers for the last request.
+    /**
+     * Returns the response headers for the last request.
      *  @deprecated response()->headers should be used instead.
      *  @return HTTP reponse headers for the last request.
      */
@@ -91,7 +97,8 @@ class LeagueOfPHP {
         return $this->response->headers;
     }
 
-    /** Sets the region of the instance
+    /**
+     * Sets the region of the instance
      *
      * @param $region string The new region to perform the requests at.
      *
@@ -102,7 +109,8 @@ class LeagueOfPHP {
         $this->debugPrint("Region changed to '$region'.");
     }
 
-    /** Forces the api to automatically retry failed requests
+    /**
+     * Forces the api to automatically retry failed requests
      *
      * @param $autoRetry array Array of response codes to retry if received.
      *     Send an empty array to stop autoretryng. If null is sent, it will default to 429.
@@ -120,7 +128,8 @@ class LeagueOfPHP {
             ") with timeout $timeout and max $tries tries.");
     }
 
-    /** Sets a callback function to call when a requests fail.
+    /**
+     * Sets a callback function to call when a requests fail.
      *
      * @param $callback callable Function that will be called when a request fails. 
      *     The first parameter is the request URL, and the second the HTTP response code.
@@ -130,7 +139,8 @@ class LeagueOfPHP {
         $this->debugPrint("Callback on error function set to $callback");
     }
 
-    /** Enables verbose debug logs
+    /**
+     * Enables verbose debug logs
      *
      * @param $debug boolean True to enable debug logs, false to disable.
      * @param $out handle Stream to write the log to. Must be already open. Defaults to STDERR.
