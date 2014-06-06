@@ -183,7 +183,7 @@ class LeagueOfPHP {
         $tries = 0;
 
         do {
-            $this->debugPrint("Requesting $url, try #$tries.");
+            $this->debugPrint("Requesting $url, try #" . ($tries + 1));
             
             $response = curl_exec($this->ch);
             $breakpoint = strpos($response, '{');
@@ -195,7 +195,7 @@ class LeagueOfPHP {
             $this->response->sentHeaders = curl_getinfo($this->ch, CURLINFO_HEADER_OUT);
             $this->response->body = json_decode(substr($response, $breakpoint));
 
-        } while (in_array($this->response->code, $this->autoRetry) && $tries++ < $this->tries
+        } while (in_array($this->response->code, $this->autoRetry) && ++$tries < $this->tries
             && !sleep($this->timeout));
 
         if ($this->response->code != 200) {
@@ -211,7 +211,7 @@ class LeagueOfPHP {
      */
     private function debugPrint($msg) {
         if ($this->debug)
-            fwrite($this->output, 'LOP Debug: ' . $msg . "\n");
+            fwrite($this->output, "\x1b[33;1m LOP Debug: \x1b[39;49m" . $msg . "\x1b[0m \n");
     }
 
     /**
