@@ -34,8 +34,8 @@ For simplifying reasons, this implementation accepts requests in a slightly diff
 
 Becomes
 
-    request('champion', 1.1);
-    request('summoner/by-name/{name}', 1.3);
+    request('champion', '1.1');
+    request('summoner/by-name/{name}', '1.3');
 
     requestStaticData('summoner-spell');
 
