@@ -1,5 +1,7 @@
 <?php
 
+require_once 'LeagueOfPHPException.class.php';
+
 class LeagueOfPHP {
     private static $baseHostname = 'api.pvp.net/api/lol';
 
@@ -25,6 +27,7 @@ class LeagueOfPHP {
     private $debug;
     private $output;
 
+    private $useExceptions;
     private $callback;
 
     /**
@@ -83,7 +86,7 @@ class LeagueOfPHP {
      * @return stdClass The last request's result, as stdClass Object.
      */
     public function response() {
-        $this->debugPrint(print_r($this->response, true));
+        $this->debugPrint(print_r($this->response, true), 3);
         return $this->response;
     }
 
@@ -105,7 +108,7 @@ class LeagueOfPHP {
     public function setRegion($region) {
         $this->region = $region;
 
-        $this->debugPrint("Region changed to '$region'.");
+        $this->debugPrint("Region changed to '$region'.", 1);
     }
 
     /**
@@ -124,7 +127,7 @@ class LeagueOfPHP {
         $this->tries = $tries;
 
         $this->debugPrint('Autoretry set for error codes (' . implode(', ', $autoRetry) .
-            ") with timeout $timeout and max $tries tries.");
+            ") with timeout $timeout and max $tries tries.", 1);
     }
 
     /**
@@ -135,7 +138,7 @@ class LeagueOfPHP {
      */
     public function setCallback($callback = null) {
         $this->callback = $callback;
-        $this->debugPrint("Callback on error function set to $callback");
+        $this->debugPrint("Callback on error function set to $callback", 1);
     }
 
     /**
@@ -144,9 +147,14 @@ class LeagueOfPHP {
      * @param boolean $debug True to enable debug logs, false to disable.
      * @param handle  $out Stream to write the log to. Must be already open. Defaults to STDERR.
      */
-    public function debug($debug = true, $out = STDERR) {
+    public function debug($debug = 2, $out = STDERR) {
         $this->debug = $debug;
         $this->output = $out;
+    }
+
+    public function useExceptions($useExceptions = true) {
+        $this->useExceptions = $useExceptions;
+        $this->debugPrint('Now exceptions will be thrown.', 1);
     }
 
     // --# NO TRESPASSING # --    Private section    --# NO TRESPASSING # --
@@ -183,7 +191,7 @@ class LeagueOfPHP {
         $tries = 0;
 
         do {
-            $this->debugPrint("Requesting $url, try #" . ($tries + 1));
+            $this->debugPrint("Requesting $url, try #" . ($tries + 1), 2);
             
             $response = curl_exec($this->ch);
             $breakpoint = strpos($response, '{');
@@ -199,8 +207,9 @@ class LeagueOfPHP {
             && !sleep($this->timeout));
 
         if ($this->response->code != 200) {
-            $this->debugPrint("Max tries exhausted while requesting $url.");
+            $this->debugPrint("Max tries exhausted while requesting $url.", 2);
             $this->callback($url, $this->response->code);
+            $this->throwException($url, $this->response->code);
         }
     }
 
@@ -209,8 +218,8 @@ class LeagueOfPHP {
      *
      * @param string $msg Message to print.
      */
-    private function debugPrint($msg) {
-        if ($this->debug)
+    private function debugPrint($msg, $level) {
+        if ($this->debug > $level)
             fwrite($this->output, "\x1b[33;1m LOP Debug: \x1b[39;49m" . $msg . "\x1b[0m \n");
     }
 
@@ -224,6 +233,11 @@ class LeagueOfPHP {
         if($this->callback != null) {
             call_user_func($this->callback, $url, $code);
         }
+    }
+
+    private function throwException($url, $code) {
+        if ($this->useExceptions)
+            throw new LeagueOfPHPException($url, $this->response->code);
     }
 
 }
