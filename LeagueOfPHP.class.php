@@ -119,7 +119,7 @@ class LeagueOfPHP {
      * @param int   $timeout   Time, in seconds, to wait between requests.
      * @param int   $tries     Maximum number of tries to do before giving up.
      */
-    public function setAutoRetry($autoRetry = null, $timeout = 2, $tries = 5) {
+    public function setAutoRetry($autoRetry = null, $timeout = 3, $tries = 5) {
         if ($autoRetry == null)
             $autoRetry = self::$default_autoretry;
         $this->autoRetry = $autoRetry;
@@ -152,6 +152,11 @@ class LeagueOfPHP {
         $this->output = $out;
     }
 
+    /**
+     * Activates the use of exceptions when requests fail.
+     *
+     * @param boolean $useExceptions True to use them, false to stop throwing. Defaults to true.
+     */
     public function useExceptions($useExceptions = true) {
         $this->useExceptions = $useExceptions;
         $this->debugPrint('Now exceptions will be thrown.', 1);
@@ -219,7 +224,7 @@ class LeagueOfPHP {
      * @param string $msg Message to print.
      */
     private function debugPrint($msg, $level) {
-        if ($this->debug > $level)
+        if ($this->debug >= $level)
             fwrite($this->output, "\x1b[33;1m LOP Debug: \x1b[39;49m" . $msg . "\x1b[0m \n");
     }
 

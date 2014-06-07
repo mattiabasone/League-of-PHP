@@ -1,6 +1,6 @@
 <?php
 
-class LeagueOfPHPException {
+class LeagueOfPHPException extends Exception {
     private $url;
 
     public function __construct($url, $errorCode) {
