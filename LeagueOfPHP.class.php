@@ -177,7 +177,7 @@ class LeagueOfPHP {
         if ($static)
             $url .= '/static-data';
 
-        return $url . "/{$this->region}/v$version/$req?api_key={$this->key}";
+        return $url . "/{$this->region}/v$version/". urlencode($req) ."?api_key={$this->key}";
     }
 
     /**
