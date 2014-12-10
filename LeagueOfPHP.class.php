@@ -1,32 +1,27 @@
 <?php
-
 require_once 'LeagueOfPHPException.class.php';
 
+/**
+ * Class LeagueOfPHP
+ */
 class LeagueOfPHP {
-    private static $baseHostname = 'api.pvp.net/api/lol';
 
+    private static $baseHostname = 'api.pvp.net/api/lol';
     private static $curlOpts = array(
         CURLOPT_HEADER => true,
         CURLINFO_HEADER_OUT => true,
         CURLOPT_RETURNTRANSFER => true
-        );
-
+    );
     private static $default_autoretry = array(429);
-
     private $region;
     private $key;
-
     private $ch;
-
     private $response;
-
     private $autoRetry;
     private $timeout;
     private $tries;
-
     private $debug;
     private $output;
-
     private $useExceptions;
     private $callback;
 
@@ -40,11 +35,8 @@ class LeagueOfPHP {
     public function __construct($key, $region) {
         $this->key = $key;
         $this->region = $region;
-
         $this->ch = curl_init();
-
         curl_setopt_array($this->ch, self::$curlOpts);
-
         $this->autoRetry = array();
         $this->debug = false;
         $this->callback = null;
@@ -92,7 +84,7 @@ class LeagueOfPHP {
 
     /**
      * Returns the response headers for the last request.
-     * 
+     *
      * @deprecated response()->headers should be used instead.
      * @return string HTTP reponse headers for the last request.
      */
@@ -107,7 +99,6 @@ class LeagueOfPHP {
      */
     public function setRegion($region) {
         $this->region = $region;
-
         $this->debugPrint("Region changed to '$region'.", 1);
     }
 
@@ -125,7 +116,6 @@ class LeagueOfPHP {
         $this->autoRetry = $autoRetry;
         $this->timeout = $timeout;
         $this->tries = $tries;
-
         $this->debugPrint('Autoretry set for error codes (' . implode(', ', $autoRetry) .
             ") with timeout $timeout and max $tries tries.", 1);
     }
@@ -133,7 +123,7 @@ class LeagueOfPHP {
     /**
      * Sets a callback function to call when a requests fail.
      *
-     * @param callable $callback Function that will be called when a request fails. 
+     * @param callable $callback Function that will be called when a request fails.
      *     The first parameter is the request URL, and the second the HTTP response code.
      */
     public function setCallback($callback = null) {
@@ -144,8 +134,8 @@ class LeagueOfPHP {
     /**
      * Enables verbose debug logs
      *
-     * @param boolean $debug True to enable debug logs, false to disable.
-     * @param handle  $out Stream to write the log to. Must be already open. Defaults to STDERR.
+     * @param int $debug
+     * @param mixed $out Stream to write the log to. Must be already open. Defaults to STDERR.
      */
     public function debug($debug = 2, $out = STDERR) {
         $this->debug = $debug;
@@ -163,20 +153,20 @@ class LeagueOfPHP {
     }
 
     // --# NO TRESPASSING # --    Private section    --# NO TRESPASSING # --
-
     /**
      * Crafts the full request URL.
      *
      * @param string $req     Base name of the request.
      * @param string $version Method version.
-     * @param string $static  True if the method is static.
+     * @param bool $static  True if the method is static.
+     * @return string
      */
     private function buildURL($req, $version, $static = false) {
-        $url = 'http://' . $this->region . '.' . self::$baseHostname;
-
-        if ($static)
-            $url .= '/static-data';
-
+        if ($static) {
+            $url = 'http://global.' . self::$baseHostname.'/static-data';
+        } else {
+            $url = 'http://' . $this->region . '.' . self::$baseHostname;
+        }
         return $url . "/{$this->region}/v$version/". urlencode($req) ."?api_key={$this->key}";
     }
 
@@ -184,33 +174,26 @@ class LeagueOfPHP {
      * Actually performs the request against the given url.
      *
      * @param string $url  URL to request.
-     * @param string $tipe HTTP request type (GET or POST)
+     * @param string $type HTTP request type (GET or POST)
      */
     private function doRequest($url, $type) {
         curl_setopt($this->ch, CURLOPT_URL, $url);
-        
+
         if ($type == 'GET') {
             curl_setopt($this->ch, CURLOPT_HTTPGET, true);
         }
-
         $tries = 0;
-
         do {
             $this->debugPrint("Requesting $url, try #" . ($tries + 1), 2);
-            
             $response = curl_exec($this->ch);
             $breakpoint = strpos($response, '{');
-
             $this->response = new stdClass();
-
             $this->response->code = curl_getinfo($this->ch, CURLINFO_HTTP_CODE);
             $this->response->headers = substr($response, 0, $breakpoint - 1);
             $this->response->sentHeaders = curl_getinfo($this->ch, CURLINFO_HEADER_OUT);
             $this->response->body = json_decode(substr($response, $breakpoint));
-
         } while (in_array($this->response->code, $this->autoRetry) && ++$tries < $this->tries
             && !sleep($this->timeout));
-
         if ($this->response->code != 200) {
             $this->debugPrint("Max tries exhausted while requesting $url.", 2);
             $this->callback($url, $this->response->code);
@@ -218,7 +201,7 @@ class LeagueOfPHP {
         }
     }
 
-    /** 
+    /**
      * Prints a debug message, if configured to do so.
      *
      * @param string $msg Message to print.
@@ -230,7 +213,7 @@ class LeagueOfPHP {
 
     /**
      * Calls the user-defined function if configured to do so.
-     * 
+     *
      * @param string $url  URL which was being requested.
      * @param int    $code HTTP response code.
      */
@@ -244,7 +227,4 @@ class LeagueOfPHP {
         if ($this->useExceptions)
             throw new LeagueOfPHPException($url, $this->response->code);
     }
-
 }
-
-?>
