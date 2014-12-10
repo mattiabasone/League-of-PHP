@@ -55,11 +55,11 @@ class LeagueOfPHP {
      *
      * @param string $req     Request URL. Region must be ommited.
      * @param string $version The version of the method to use.
-     * @param string $type    The request type. Currently Riot only offers GET requests.
+     * @param mixed $params Optional parameters.
      *
      */
-    public function request($req, $version, $type = 'GET') {
-        $this->doRequest($this->buildURL($req, $version), $type);
+    public function request($req, $version, $params = false) {
+        $this->doRequest($this->buildURL($req, $version, false, $params));
     }
 
     /**
@@ -67,9 +67,10 @@ class LeagueOfPHP {
      *
      * @param string $req     Request URL. Region must be ommited.
      * @param string $version The version of the method to use. If it's equal to 1, it can be ommited.
+     * @param mixed $params Optional parameters.
      */
-    public function requestStaticData($req, $version = '1') {
-        $this->doRequest($this->buildURL($req, $version, true), 'GET');
+    public function requestStaticData($req, $version = '1', $params = false) {
+        $this->doRequest($this->buildURL($req, $version, true, $params), 'GET');
     }
 
     /**
@@ -161,27 +162,30 @@ class LeagueOfPHP {
      * @param bool $static  True if the method is static.
      * @return string
      */
-    private function buildURL($req, $version, $static = false) {
+    private function buildURL($req, $version, $static = false, $params = false) {
+        $queryString = "";
         if ($static) {
             $url = 'http://global.' . self::$baseHostname.'/static-data';
         } else {
             $url = 'http://' . $this->region . '.' . self::$baseHostname;
         }
-        return $url . "/{$this->region}/v$version/". urlencode($req) ."?api_key={$this->key}";
+        if ($params && is_array($params)) {
+            $queryString .= "&";
+            foreach ($params as $key => $value) {
+                $queryString .= "$key=".urlencode($value);
+            }
+        }
+        return $url . "/{$this->region}/v$version/". urlencode($req) ."?api_key={$this->key}$queryString";
     }
 
     /**
      * Actually performs the request against the given url.
      *
      * @param string $url  URL to request.
-     * @param string $type HTTP request type (GET or POST)
      */
-    private function doRequest($url, $type) {
+    private function doRequest($url) {
         curl_setopt($this->ch, CURLOPT_URL, $url);
-
-        if ($type == 'GET') {
-            curl_setopt($this->ch, CURLOPT_HTTPGET, true);
-        }
+        curl_setopt($this->ch, CURLOPT_HTTPGET, true);
         $tries = 0;
         do {
             $this->debugPrint("Requesting $url, try #" . ($tries + 1), 2);
